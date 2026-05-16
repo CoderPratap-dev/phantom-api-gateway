@@ -1,0 +1,14 @@
+{
+  "name": "phantom-api-gateway",
+  "version": "1.0.0",
+  "description": "High-throughput reverse proxy with JWT auth and adaptive rate limiting",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node tests/gateway.test.js"
+  },
+  "keywords": ["api-gateway", "proxy", "jwt", "rate-limiting"],
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" }
+}
