@@ -1,150 +1,108 @@
-# Phantom API Gateway
+# NeuralNet Dashboard
 
-> High-throughput Node.js reverse proxy with JWT authentication, adaptive rate limiting, structured logging, and a built-in admin panel.
+> Real-time ML model monitoring platform with streaming metrics, anomaly detection, and automated alerting.
 
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square)
-![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-00f5ff?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-ff00aa?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat-square)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square)
+![WebSocket](https://img.shields.io/badge/WebSocket-Live-00f5ff?style=flat-square)
 
 ---
 
 ## Features
 
-- **Zero npm dependencies** — pure Node.js stdlib only
-- **JWT authentication** — HS256 verification with timing-safe comparison
-- **Adaptive rate limiting** — sliding-window per-IP, configurable per environment
-- **Path-based routing** — prefix matching with upstream rewriting
-- **Request logging** — colorized console + rotating file logs
-- **Admin panel** — metrics, health, route listing, token generation at `/_admin`
-- **Docker-ready** — single container, no external services required
+- **Live WebSocket streaming** — metrics pushed every 2 seconds, no polling
+- **Anomaly detection** — z-score analysis over rolling 60-point windows
+- **Multi-model monitoring** — track latency, RPS, accuracy, error rate, CPU/memory
+- **Alert system** — REST API to create threshold-based alerts
+- **Model management** — update status and versions via PATCH endpoints
+- **Docker-ready** — single `docker compose up` to run everything
 
 ---
 
 ## Quick Start
 
+### Option A — Docker (recommended)
+
 ```bash
-git clone https://github.com/CoderPratap-dev/phantom-api-gateway.git
-cd phantom-api-gateway
-
-# Set your JWT secret
-export JWT_SECRET="your-super-secret-key"
-
-# Start
-node src/index.js
+# Clone and start
+git clone https://github.com/CoderPratap-dev/neuralnet-dashboard.git
+cd neuralnet-dashboard
+docker compose up --build
 ```
 
-Gateway runs on **port 3000** by default.
+Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Configuration
+### Option B — Manual
 
-Edit `src/config/gateway.config.js`:
+**Backend (FastAPI)**
 
-```js
-module.exports = {
-  port: 3000,
-
-  jwt: {
-    secret: process.env.JWT_SECRET || "change-me",
-  },
-
-  rateLimit: {
-    windowMs: 60_000,   // 1 minute
-    maxRequests: 100,   // per IP
-  },
-
-  upstreams: {
-    users: { url: "http://localhost:4001", timeout: 8000 },
-    // add more upstream services here
-  },
-
-  routes: [
-    { method: "POST", prefix: "/auth/login", upstream: "users", public: true },
-    { method: "GET",  prefix: "/users",      upstream: "users", public: false },
-    // add more routes here
-  ],
-};
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
 ```
+
+**Frontend (React)**
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Frontend → [http://localhost:3000](http://localhost:3000)  
+API docs → [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-## Admin Panel
+## API Reference
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /_admin/health` | Uptime, memory |
-| `GET /_admin/metrics` | Request count, latency percentiles, error rate |
-| `GET /_admin/routes` | All configured routes |
-| `GET /_admin/rate-limits` | Per-IP rate limit state |
-| `POST /_admin/token` | Generate a test JWT `{"sub":"user","role":"admin"}` |
-
----
-
-## Generate a Test Token
-
-```bash
-curl -X POST http://localhost:3000/_admin/token \
-  -H "Content-Type: application/json" \
-  -d '{"sub": "alice", "role": "admin"}'
-```
-
-Use the returned token:
-
-```bash
-curl http://localhost:3000/users \
-  -H "Authorization: Bearer <token>"
-```
-
----
-
-## Run Tests
-
-```bash
-# Unit tests (no gateway needed)
-node tests/gateway.test.js
-
-# With live gateway running
-node src/index.js &
-node tests/gateway.test.js
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/models` | List all models |
+| `GET` | `/api/models/{id}` | Get model details |
+| `PATCH` | `/api/models/{id}` | Update model status/version |
+| `GET` | `/api/models/{id}/history` | Get last 60 metric snapshots |
+| `GET` | `/api/alerts` | List alerts |
+| `POST` | `/api/alerts` | Create an alert |
+| `DELETE` | `/api/alerts/{id}` | Delete an alert |
+| `WS` | `/ws/metrics` | Live metrics stream |
 
 ---
 
 ## Project Structure
 
 ```
-phantom-api-gateway/
-├── src/
-│   ├── index.js                  # Main server
-│   ├── config/
-│   │   └── gateway.config.js     # Routes, upstreams, limits
-│   ├── middleware/
-│   │   ├── auth.js               # JWT verify + sign
-│   │   ├── rateLimit.js          # Sliding-window rate limiter
-│   │   └── logger.js             # Access + error logging
-│   ├── routes/
-│   │   ├── router.js             # Route matcher
-│   │   └── admin.js              # Admin endpoints
-│   └── services/
-│       └── metrics.js            # In-memory metrics store
-├── tests/
-│   └── gateway.test.js
-├── logs/                         # Created at runtime
-├── package.json
+neuralnet-dashboard/
+├── backend/
+│   ├── main.py            # FastAPI app + WebSocket streaming
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── App.js         # Main dashboard component
+│   │   └── index.js
+│   ├── public/
+│   │   └── index.html
+│   └── package.json
+├── docker-compose.yml
 └── README.md
 ```
 
 ---
 
-## Production Checklist
+## Customization
 
-- [ ] Set `JWT_SECRET` via environment variable
-- [ ] Set `UPSTREAM_*` env vars for all services
-- [ ] Lower `rateLimit.maxRequests` for public-facing deployments
-- [ ] Mount a volume for `/logs` persistence
-- [ ] Add HTTPS termination (nginx/Caddy in front)
-- [ ] Swap rate limiter store to Redis for multi-node
+**Add a real model** — replace the `_simulate_metric()` function in `backend/main.py` with calls to your actual inference endpoint.
+
+**Persist metrics** — swap the in-memory `deque` for a PostgreSQL/TimescaleDB table using `asyncpg`.
+
+**Add Slack alerts** — hook into `_check_anomaly()` to POST to a Slack webhook when anomalies are detected.
 
 ---
 
