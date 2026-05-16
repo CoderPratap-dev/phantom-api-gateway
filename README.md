@@ -23,7 +23,7 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/KernelSanders-DFIR/phantom-api-gateway.git
+git clone https://github.com/CoderPratap-dev/phantom-api-gateway.git
 cd phantom-api-gateway
 
 # Set your JWT secret
